@@ -1,16 +1,48 @@
 import pandas as pd
+import os
 import random
+from datetime import datetime, timedelta
+from tqdm import tqdm
 
-data = []
-for vehicle_id in range(1, 4):  # 3 veículos
-    for i in range(1000):       # 1000 linhas por veículo
-        data.append({
-            "vehicle_id": f"V{vehicle_id}",
-            "timestamp": f"2025-06-03 12:{i%60:02}:{i%60:02}",
-            "latitude": round(random.uniform(-23.6, -23.5), 6),
-            "longitude": round(random.uniform(-46.7, -46.6), 6),
-            "speed_kmh": random.randint(0, 120)
-        })
+def generate_gps_data(
+        
+        num_vehicles=100,
+        rows_per_vehicle=100_000,
+        start_time_str="2025-01-01 00:00:00",
+        output_file="csv_data/gps_data.csv"
 
-df = pd.DataFrame(data)
-df.to_csv("gps_data.csv", index=False)
+):
+    if os.path.exists(output_file):
+        print(f"Arquivo já existe: {output_file}. Pulando geração.")
+        return
+    
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    
+    start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
+    data = []
+
+    for vehicle_id in tqdm(range(1,num_vehicles + 1), desc="Generating data"):
+        timestamp = start_time
+        for _ in range(rows_per_vehicle):
+            data.append({
+                "vehicle_id": f"V{vehicle_id}",
+                "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                "latitude": round(random.uniform(-23.7, -23.4),6),
+                "longitude": round(random.uniform(-46.8, -46.5), 6),
+                "speed_kmh": random.randint(0,180)
+
+            })
+            timestamp += timedelta(seconds=1)
+
+    df = pd.DataFrame(data)
+    df.to_csv(output_file, index=False)
+    print(f"\nCSV com {len(df)} linhas salvo em: {output_file}")
+
+if __name__ == "__main__":
+    generate_gps_data(
+        num_vehicles=100,
+        rows_per_vehicle=100_000,
+        output_file="csv_data/gps_data.csv"
+    
+    )
